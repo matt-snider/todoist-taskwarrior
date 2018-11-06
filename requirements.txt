@@ -1,0 +1,4 @@
+Click==7.0
+taskw==1.2.0
+todoist-python==7.0.18
+
