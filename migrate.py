@@ -29,23 +29,25 @@ def migrate(interactive, no_sync):
     tasks = todoist.items.all()
     important(f'Starting migration of {len(tasks)}...')
     for task in todoist.items.all():
-        if interactive and not click.confirm(f"Import '{task['content']}'?"):
+        tid = task['id']
+        name = task['content']
+        project = todoist.projects.get_by_id(task['project_id'])
+
+        if interactive and not click.confirm(f"Import '{name}'?"):
             continue
 
-        add_task(task)
+        add_task(tid, name, project)
 
 
-def add_task(todoist_task):
+def add_task(tid, name, project):
     """Add a taskwarrior task from todoist task
 
     Returns the taskwarrior task.
     """
-    tid = todoist_task['id']
-    name = todoist_task['content']
-
-    info(f"Importing '{name}' (ID: {tid})  - ", nl=False)
+    project_name = project['name'] if project else None
+    info(f"Importing '{name}' ({project_name}) - ", nl=False)
     try:
-        tw_task = taskwarrior.task_add(name)
+        tw_task = taskwarrior.task_add(name, project=project_name)
     except:
         error('FAILED')
     else:
