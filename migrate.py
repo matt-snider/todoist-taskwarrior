@@ -18,7 +18,7 @@ def cli(todoist_api_key):
 
 
 @cli.command()
-@click.option('-i', '--interactive', default=False)
+@click.option('-i', '--interactive', is_flag=True, default=False)
 @click.option('--no-sync', is_flag=True, default=False)
 def migrate(interactive, no_sync):
     if not no_sync:
@@ -29,6 +29,9 @@ def migrate(interactive, no_sync):
     tasks = todoist.items.all()
     important(f'Starting migration of {len(tasks)}...')
     for task in todoist.items.all():
+        if interactive and not click.confirm(f"Import '{task['content']}'?"):
+            continue
+
         add_task(task)
 
 
