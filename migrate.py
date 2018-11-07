@@ -19,12 +19,15 @@ def cli(todoist_api_key):
 
 @cli.command()
 @click.option('-i', '--interactive', default=False)
-def migrate(interactive):
-    important('Starting migration...')
-    # todoist.sync()
-    tasks = todoist.items.all()
+@click.option('--no-sync', is_flag=True, default=False)
+def migrate(interactive, no_sync):
+    if not no_sync:
+        important('Syncing tasks with todoist... ', nl=False)
+        todoist.sync()
+        success('OK')
 
-    info(f'Todoist tasks: {len(todoist.items.all())}')
+    tasks = todoist.items.all()
+    important(f'Starting migration of {len(tasks)}...')
     for task in todoist.items.all():
         add_task(task)
 
