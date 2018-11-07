@@ -26,19 +26,40 @@ def migrate(interactive):
 
     info(f'Todoist tasks: {len(todoist.items.all())}')
     for task in todoist.items.all():
-        tid = task['id']
-        name = task['content']
-        info(f'Importing task #{tid}: {name}')
-        taskwarrior.task_add(name)
+        add_task(task)
+
+
+def add_task(todoist_task):
+    """Add a taskwarrior task from todoist task
+
+    Returns the taskwarrior task.
+    """
+    tid = todoist_task['id']
+    name = todoist_task['content']
+
+    info(f"Importing '{name}' (ID: {tid})  - ", nl=False)
+    try:
+        tw_task = taskwarrior.task_add(name)
+    except:
+        error('FAILED')
+    else:
+        success('OK')
+    return tw_task
+
 
 """ Utils """
 
-def important(msg):
-    click.echo(click.style(msg, fg='blue', bold=True))
+def important(msg, **kwargs):
+    click.echo(click.style(msg, fg='blue', bold=True), **kwargs)
 
+def info(msg, **kwargs):
+    click.echo(msg, **kwargs)
 
-def info(msg):
-    click.echo(msg)
+def success(msg, **kwargs):
+    click.echo(click.style(msg, fg='green', bold=True))
+
+def error(msg, **kwargs):
+    click.echo(click.style(msg, fg='red', bold=True))
 
 
 """ Entrypoint """
