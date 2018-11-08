@@ -32,6 +32,7 @@ def migrate(interactive, no_sync):
         tid = task['id']
         name = task['content']
         project = todoist.projects.get_by_id(task['project_id'])['name']
+        priority = taskwarrior_priority(task['priority'])
         tags = [
             todoist.labels.get_by_id(l_id)['name']
             for l_id in task['labels']
@@ -40,17 +41,17 @@ def migrate(interactive, no_sync):
         if interactive and not click.confirm(f"Import '{name}'?"):
             continue
 
-        add_task(tid, name, project, tags)
+        add_task(tid, name, project, tags, priority)
 
 
-def add_task(tid, name, project, tags):
+def add_task(tid, name, project, tags, priority):
     """Add a taskwarrior task from todoist task
 
     Returns the taskwarrior task.
     """
     info(f"Importing '{name}' ({project}) - ", nl=False)
     try:
-        tw_task = taskwarrior.task_add(name, project=project, tags=tags)
+        tw_task = taskwarrior.task_add(name, project=project, tags=tags, priority=priority)
     except:
         error('FAILED')
     else:
@@ -72,6 +73,10 @@ def success(msg, **kwargs):
 def error(msg, **kwargs):
     click.echo(click.style(msg, fg='red', bold=True))
 
+PRIORITIES = {1: None, 2: 'L', 3: 'M', 4: 'H'}
+def taskwarrior_priority(priority):
+    """Converts a priority from Todiost (1-4) to taskwarrior (None, L, M, H) """
+    return PRIORITIES[priority]
 
 """ Entrypoint """
 
