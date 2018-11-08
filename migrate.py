@@ -38,15 +38,16 @@ def migrate(interactive, no_sync):
             todoist.labels.get_by_id(l_id)['name']
             for l_id in task['labels']
         ]
-        creation_date = taskwarrior_date(task['date_added'])
+        entry = taskwarrior_date(task['date_added'])
+        due = taskwarrior_date(task['due_date_utc'])
 
         if interactive and not click.confirm(f"Import '{name}'?"):
             continue
 
-        add_task(tid, name, project, tags, priority, creation_date)
+        add_task(tid, name, project, tags, priority, entry, due)
 
 
-def add_task(tid, name, project, tags, priority, creation_date):
+def add_task(tid, name, project, tags, priority, entry, due):
     """Add a taskwarrior task from todoist task
 
     Returns the taskwarrior task.
@@ -54,7 +55,7 @@ def add_task(tid, name, project, tags, priority, creation_date):
     info(f"Importing '{name}' ({project}) - ", nl=False)
     try:
         tw_task = taskwarrior.task_add(name, project=project, tags=tags,
-                priority=priority, entry=creation_date)
+                priority=priority, entry=entry, due=due)
     except:
         error('FAILED')
     else:
@@ -87,6 +88,8 @@ def taskwarrior_date(date):
     Todoist: Fri 26 Sep 2014 08:25:05 +0000 (what is this called)?
     taskwarrior: ISO-8601
     """
+    if not date:
+        return None
     return datetime.strptime(date, '%a %d %b %Y %H:%M:%S %z').isoformat()
 
 """ Entrypoint """
