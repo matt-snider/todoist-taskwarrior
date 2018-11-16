@@ -1,4 +1,6 @@
 Click==7.0
-taskw==1.2.0
 todoist-python==7.0.18
+
+# Temporarily use this until upstream PR #121 is merged
+git+git://github.com/matt-snider/taskw.git@develop
 
