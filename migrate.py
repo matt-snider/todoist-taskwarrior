@@ -1,5 +1,6 @@
 import click
 import re
+import os
 from datetime import datetime
 from taskw import TaskWarrior
 from todoist.api import TodoistAPI
@@ -10,13 +11,8 @@ taskwarrior = None
 """ CLI Commands """
 
 @click.group()
-@click.option('--todoist-api-key', envvar='TODOIST_API_KEY', required=True)
-def cli(todoist_api_key):
-    # Just do some initialization
-    global todoist
-    global taskwarrior
-    todoist = TodoistAPI(todoist_api_key)
-    taskwarrior = TaskWarrior()
+def cli():
+    pass
 
 
 @cli.command()
@@ -145,5 +141,11 @@ def _match_weekly(desc):
 """ Entrypoint """
 
 if __name__ == '__main__':
+    todoist_api_key = os.getenv('TODOIST_API_KEY')
+    if todoist_api_key is None:
+        exit('TODOIST_API_KEY environment variable not specified. Exiting.')
+
+    todoist = TodoistAPI(todoist_api_key)
+    taskwarrior = TaskWarrior()
     cli()
 
