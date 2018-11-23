@@ -113,9 +113,9 @@ def taskwarrior_recur(desc):
 
 
 RE_INTERVAL = 'other|\d+'
-RE_PERIOD = 'day|week|month|year'
+RE_PERIOD = 'day|week|month|year|morning|evening|weekday|workday|last\s+day'
 RE_REPEAT_EVERY = re.compile(
-    f'^\s*every\s+((?P<interval>{RE_INTERVAL})\s+)?(?P<period>{RE_PERIOD})s?\s*$'
+    f'^\s*ev(ery)?\s+((?P<interval>{RE_INTERVAL})\s+)?(?P<period>{RE_PERIOD})s?\s*$'
 )
 
 def _match_every(desc):
@@ -125,8 +125,20 @@ def _match_every(desc):
 
     interval = match.group('interval')
     period = match.group('period')
+
+    # every other <period> -> every 2 <period>
     if interval == 'other':
         interval = 2
+    # every morning -> every 1 day at 9am (the time will be stored in `due`)
+    # every evening -> every 1 day at 7pm (the time will be stored in `due`)
+    elif period == 'morning' or period == 'evening':
+        interval = 1
+        period = 'day'
+    # every weekday -> weekdays
+    elif period == 'weekday' or period == 'workday':
+        interval = ''
+        period = 'weekdays'
+
     return f'{interval} {period}'
 
 
