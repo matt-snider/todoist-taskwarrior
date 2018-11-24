@@ -47,43 +47,129 @@ def parse_recur(date_string):
     """
     if not date_string:
         return
-    return _match_every(date_string) or _match_weekly(date_string)
+    # Normalize:
+    # - trim leading, trailing, and, duplicate spaces
+    # - convert to lowercase
+    date_string = ' '.join(date_string.lower().strip().split())
+    return (
+        _recur_single_cycle(date_string) or
+        _recur_multi_cycle(date_string) or
+        _recur_day_of_week(date_string) or
+        _recur_day_of_month(date_string) or
+        _recur_special(date_string)
+    )
 
 
-RE_INTERVAL = 'other|\d+'
-RE_PERIOD = 'day|week|month|year|morning|evening|weekday|workday|last\s+day'
-RE_REPEAT_EVERY = re.compile(
-    f'^\s*ev(ery)?\s+((?P<interval>{RE_INTERVAL})\s+)?(?P<period>{RE_PERIOD})s?\s*$'
+# Atoms
+_PERIOD = r'(?P<period>hour|day|week|month|year)s?'
+_EVERY = r'ev(ery)?'
+_CYCLES = r'((?P<cycles>\d+)(st|nd|rd|th)?)'
+_SIMPLE = r'(?P<simple>daily|weekly|monthly|yearly)'
+_DOW = r'((?P<dayofweek>(mon|tues|weds|thurs|fri|sat|sun))(day)?)'
+
+# A single cycle recurrence is one of:
+# - daily, weekly, monthly, yearly
+# - every day, every week, every month, every year
+# - every 1 day, every 1 week, every 1 month, every 1 year
+RE_SINGLE_CYCLE = re.compile(
+    fr'^(({_EVERY}\s(1\s)?{_PERIOD})|{_SIMPLE})$'
 )
 
-def _match_every(desc):
-    match =  RE_REPEAT_EVERY.match(desc.lower())
+# A multi cycle recurrence is of the form: every N <period>s
+RE_MULTI_CYCLE = re.compile(
+    fr'^{_EVERY}\s({_CYCLES}|other)\s{_PERIOD}$'
+)
+
+
+# A day of week recurrence is of the form:
+# - every (monday | tuesday | ...)
+# - every Nth (monday | tuesday | ...)
+RE_EVERY_DOW = re.compile(
+    fr'^{_EVERY}\s({_CYCLES}\s)?{_DOW}$'
+)
+
+
+# A day of month recurrence is of the form: every Nth
+RE_EVERY_DOM = re.compile(
+    fr'^{_EVERY}\s{_CYCLES}$'
+)
+
+
+# Other patterns that don't fit in with the others
+RE_SPECIAL = re.compile(
+    fr'^{_EVERY}\s(?P<label>morning|evening|weekday|workday|last\sday)$'
+)
+
+
+PERIOD_TO_SIMPLE = {
+    'hour': 'hour',
+    'day': 'daily',
+    'week': 'weekly',
+    'month': 'monthly',
+    'year': 'yearly',
+}
+
+
+def _recur_single_cycle(date_string):
+    match = RE_SINGLE_CYCLE.match(date_string)
+    if not match:
+        return None
+
+    groups = match.groupdict()
+    if groups['simple']:
+        return match.group('simple')
+
+    period = match.group('period')
+    return PERIOD_TO_SIMPLE[period]
+
+
+def _recur_multi_cycle(date_string):
+    match =  RE_MULTI_CYCLE.match(date_string)
     if not match:
         return
 
-    interval = match.group('interval')
-    period = match.group('period')
+    groups = match.groupdict()
+    period = groups['period']
+    if groups['cycles']:
+        cycles = groups['cycles']
+    else:
+        # 'other' matched
+        cycles = 2
 
-    # every other <period> -> every 2 <period>
-    if interval == 'other':
-        interval = 2
-    # every morning -> every 1 day at 9am (the time will be stored in `due`)
-    # every evening -> every 1 day at 7pm (the time will be stored in `due`)
-    elif period == 'morning' or period == 'evening':
-        interval = 1
-        period = 'day'
-    # every weekday -> weekdays
-    elif period == 'weekday' or period == 'workday':
-        interval = ''
-        period = 'weekdays'
-
-    return f'{interval} {period}'
+    return f'{cycles} {period}s'
 
 
-RE_REPEAT_WEEKLY = re.compile(
-    '^\s*every\s+(mon|monday|tues|tuesday|weds|wednesday|thurs|thursday|fri|friday|sat|saturday|sun|sunday)\s*'
-)
+def _recur_day_of_week(date_string):
+    match =  RE_EVERY_DOW.match(date_string)
+    if not match:
+        return
 
-def _match_weekly(desc):
-    return ('weekly' if RE_REPEAT_WEEKLY.match(desc.lower()) else None)
+    groups = match.groupdict()
+    day_of_week = groups['dayofweek']
+    if groups['cycles']:
+        cycles = groups['cycles']
+    else:
+        cycles = 1
+    return 'weekly' if cycles == 1 else f'{cycles} weeks'
+
+
+def _recur_day_of_month(date_string):
+    match =  RE_EVERY_DOM.match(date_string)
+    if not match:
+        return
+    return 'monthly'
+
+
+def _recur_special(date_string):
+    match =  RE_SPECIAL.match(date_string)
+    if not match:
+        return
+
+    label = match.group('label')
+    if label == 'morning' or label == 'evening':
+        return 'daily'
+    elif label == 'weekday' or label == 'workday':
+        return 'weekdays'
+    elif label == 'last day':
+        return 'monthly'
 
