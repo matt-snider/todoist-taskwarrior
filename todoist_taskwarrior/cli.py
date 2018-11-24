@@ -27,24 +27,25 @@ def migrate(interactive, no_sync):
         success('OK')
 
     tasks = todoist.items.all()
-    important(f'Starting migration of {len(tasks)}...')
-    for task in todoist.items.all():
-        tid = task['id']
-        name = task['content']
-        project = todoist.projects.get_by_id(task['project_id'])['name']
-        priority = utils.parse_priority(task['priority'])
-        tags = [
+    important(f'Starting migration of {len(tasks)}...\n')
+    for idx, task in enumerate(tasks):
+        data = {}
+        data['tid'] = task['id']
+        data['name'] = task['content']
+        data['project'] = todoist.projects.get_by_id(task['project_id'])['name']
+        data['priority'] = utils.parse_priority(task['priority'])
+        data['tags'] = [
             todoist.labels.get_by_id(l_id)['name']
             for l_id in task['labels']
         ]
-        entry = utils.parse_date(task['date_added'])
-        due = utils.parse_date(task['due_date_utc'])
-        recur = utils.parse_recur(task['date_string'])
+        data['entry'] = utils.parse_date(task['date_added'])
+        data['due'] = utils.parse_date(task['due_date_utc'])
+        data['recur'] = utils.parse_recur(task['date_string'])
 
-        if interactive and not click.confirm(f"Import '{name}'?"):
-            continue
-
-        add_task(tid, name, project, tags, priority, entry, due, recur)
+        if not interactive:
+            add_task(**data)
+        else:
+            task_prompt(idx + 1, len(tasks), **data)
 
 
 def add_task(tid, name, project, tags, priority, entry, due, recur):
@@ -63,10 +64,107 @@ def add_task(tid, name, project, tags, priority, entry, due, recur):
         return tw_task
 
 
-""" Utils """
+def task_prompt(task_num, tasks_total, **task_data):
+    """Interactively add tasks
+
+    y - add task
+    n - skip task
+    r - rename task
+    p - change priority
+    t - change tags
+    ? - print help
+    """
+    callbacks = {
+        'y': lambda: task_data,
+        'n': lambda: task_data,
+
+        # Rename
+        'r': lambda: {
+            **task_data,
+            'name': name_prompt(task_data['name']),
+        },
+
+        # Edit tags
+        't': lambda: {
+            **task_data,
+            'tags': tags_prompt(task_data['tags']),
+        },
+
+        # Edit priority
+        'p': lambda: {
+            **task_data,
+            'priority': priority_prompt(task_data['priority']),
+        },
+
+        # Help message
+        '?': lambda: task_prompt_help() or task_data,
+    }
+
+    response = None
+    while response not in ('y', 'n'):
+        click.echo(important_msg(f'Task {task_num} of {tasks_total}'))
+        prompt_text = (
+            stringify_task(**task_data)
+            + important_msg(f"\nImport this task?")
+        )
+        response = click.prompt(
+            prompt_text,
+            type=click.Choice(callbacks.keys()),
+            show_choices=True,
+        )
+
+        # Execute operation
+        task_data = callbacks[response]()
+
+    if response == 'n':
+        error('Skipping task\n')
+        return
+
+    return add_task(**task_data)
+
+
+def task_prompt_help():
+    lines = [
+        x.strip() for x in
+        task_prompt.__doc__.split('\n')
+    ]
+    error('\n'.join(lines))
+
+
+def tags_prompt(tags):
+    return click.prompt(
+        important_msg('Set tags'),
+        default=' '.join(tags),
+        show_default=False,
+        value_proc=lambda x: x.split(' ')
+    )
+
+
+def priority_prompt(priority):
+    return click.prompt(
+        important_msg('Set priority'),
+        default='',
+        type=click.Choice([None, 'L', 'M', 'H']),
+        value_proc=lambda x: None if '' else x,
+        show_default=False,
+    )
+
+
+def name_prompt(name):
+    return click.prompt(
+        important_msg('Set name'),
+        default=name,
+        value_proc=lambda x: x.strip()
+    )
+
+
+""" Output Utils """
 
 def important(msg, **kwargs):
-    click.echo(click.style(msg, fg='blue', bold=True), **kwargs)
+    click.echo(important_msg(msg), **kwargs)
+
+def important_msg(msg):
+    return click.style(msg, fg='blue', bold=True)
 
 def info(msg, **kwargs):
     click.echo(msg, **kwargs)
@@ -76,6 +174,17 @@ def success(msg, **kwargs):
 
 def error(msg, **kwargs):
     click.echo(click.style(msg, fg='red', bold=True))
+
+def stringify_task(**task_data):
+    string = ''
+    for key, value in task_data.items():
+        key = click.style(key, underline=True)
+        if isinstance(value, list):
+            value = ' '.join(value)
+        elif value is None:
+            value = ''
+        string += f'{key}: {value}\n'
+    return string
 
 
 """ Entrypoint """
