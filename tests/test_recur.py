@@ -4,7 +4,6 @@ Tests parsing `recur` strings from Todoist `date_string`s
 """
 from todoist_taskwarrior import utils
 
-# TODO: try with every and ev
 
 def test_hourly():
     assert utils.parse_recur('every hour') == 'hourly'
@@ -60,7 +59,6 @@ def test_day_of_week():
     """ The actual day should be indicated in the `due` property, so here
     we just need to ensure that the recurrence is correct.
     """
-    # TODO: test every day of the week (incl short forms)
     assert utils.parse_recur('every mon') == 'weekly'
     assert utils.parse_recur('every monday') == 'weekly'
     assert utils.parse_recur('every tuesday') == 'weekly'
@@ -81,9 +79,6 @@ def test_day_of_month():
     assert utils.parse_recur('every 22nd') == 'monthly'
     assert utils.parse_recur('every 23rd') == 'monthly'
     assert utils.parse_recur('every 24th') == 'monthly'
-
-    # TODO: taskwarrior doesn't support this *exactly* -- monthly just means 30d
-    # https://github.com/GothenburgBitFactory/taskwarrior/issues/1647
     assert utils.parse_recur('every last day') == 'monthly'
 
 
@@ -94,8 +89,5 @@ def test_annually():
 
 
 def test_unsupported():
-    # TODO: expect exception
-    # taskwarrior doesn't support reccurances of form
-    # - every monday,tuesday,...
     pass
 
