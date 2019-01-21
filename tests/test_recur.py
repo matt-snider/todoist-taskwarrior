@@ -2,6 +2,7 @@
 
 Tests parsing `recur` strings from Todoist `date_string`s
 """
+import pytest
 from todoist_taskwarrior import utils
 
 
@@ -54,17 +55,95 @@ def test_monthly():
     assert utils.parse_recur('every 2nd month') == '2 months'
     assert utils.parse_recur('every 3rd month') == '3 months'
 
+DAYS_OF_WEEK = [
+    # Monday
+    'mo',
+    'mon',
+    'monday',
 
-def test_day_of_week():
+    # Tuesday
+    'tu',
+    'tue',
+    'tues',
+    'tuesday',
+
+    # Wednesday
+    'we',
+    'wed',
+    'weds',
+    'wednesday',
+
+    # Thursday
+    'th',
+    'thu',
+    'thurs',
+    'thursday',
+
+    # Friday
+    'fr',
+    'fri',
+    'friday',
+
+    # Saturday
+    'sa',
+    'sat',
+    'saturday',
+
+    # Sunday
+    'su',
+    'sun',
+    'sunday',
+]
+
+
+@pytest.mark.parametrize('dow', DAYS_OF_WEEK)
+def test_every_dow_has_weekly_recurrence(dow):
     """ The actual day should be indicated in the `due` property, so here
-    we just need to ensure that the recurrence is correct.
+        we just need to ensure that the recurrence is correct.
     """
-    assert utils.parse_recur('every mon') == 'weekly'
-    assert utils.parse_recur('every monday') == 'weekly'
-    assert utils.parse_recur('every tuesday') == 'weekly'
-    assert utils.parse_recur('every tues') == 'weekly'
-    assert utils.parse_recur('every 2nd monday') == '2 weeks'
-    assert utils.parse_recur('every 3rd friday') == '3 weeks'
+    assert utils.parse_recur(f'ev {dow}') == 'weekly'
+    assert utils.parse_recur(f'every {dow}') == 'weekly'
+
+
+@pytest.mark.parametrize('ordinal', [
+    ('2', 2),
+    ('2nd', 2),
+    ('3', 3),
+    ('3rd', 3),
+    ('4', 4),
+    ('4th', 4),
+])
+@pytest.mark.parametrize('dow', DAYS_OF_WEEK)
+def test_every_dow_ordinal_recurrence(ordinal, dow):
+    ordinal, expected = ordinal
+    assert utils.parse_recur(f'ev {ordinal} {dow}') == f'{expected} weeks'
+    assert utils.parse_recur(f'every {ordinal} {dow}') == f'{expected} weeks'
+
+
+# def test_day_of_week_short_forms():
+#     assert utils.parse_recur('every mo') == 'weekly'
+#     assert utils.parse_recur('every mon') == 'weekly'
+
+#     assert utils.parse_recur('every tu') == 'weekly'
+#     assert utils.parse_recur('every tue') == 'weekly'
+#     assert utils.parse_recur('every tues') == 'weekly'
+
+#     assert utils.parse_recur('every we') == 'weekly'
+#     assert utils.parse_recur('every wed') == 'weekly'
+#     assert utils.parse_recur('every weds') == 'weekly'
+
+#     assert utils.parse_recur('every th') == 'weekly'
+#     assert utils.parse_recur('every thu') == 'weekly'
+#     assert utils.parse_recur('every thurs') == 'weekly'
+
+#     assert utils.parse_recur('every fr') == 'weekly'
+#     assert utils.parse_recur('every fri') == 'weekly'
+
+#     assert utils.parse_recur('every sa') == 'weekly'
+#     assert utils.parse_recur('every sat') == 'weekly'
+
+#     assert utils.parse_recur('every su') == 'weekly'
+#     assert utils.parse_recur('every sun') == 'weekly'
 
 
 def test_day_of_month():

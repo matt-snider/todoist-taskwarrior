@@ -65,7 +65,7 @@ _PERIOD = r'(?P<period>hour|day|week|month|year)s?'
 _EVERY = r'ev(ery)?'
 _CYCLES = r'((?P<cycles>\d+)(st|nd|rd|th)?)'
 _SIMPLE = r'(?P<simple>daily|weekly|monthly|yearly)'
-_DOW = r'((?P<dayofweek>(mon|tues|weds|thurs|fri|sat|sun))(day)?)'
+_DOW = r'((?P<dayofweek>(mo(n(day)?)?|tu(e(s(day)?)?)?|we(d(s|(nes(day)?)?)?)?|th(u(rs(day)?)?)?|fr(i(day)?)?|sa(t(urday)?)?|su(n(day)?)?)))'
 
 # A single cycle recurrence is one of:
 # - daily, weekly, monthly, yearly
