@@ -9,7 +9,6 @@ from . import utils
 todoist = None
 taskwarrior = None
 
-
 """ CLI Commands """
 
 @click.group()
@@ -30,8 +29,8 @@ def migrate(interactive, no_sync):
     important(f'Starting migration of {len(tasks)}...\n')
     for idx, task in enumerate(tasks):
         data = {}
-        data['tid'] = task['id']
-        data['name'] = task['content']
+        tid = data['tid'] = task['id']
+        name = data['name'] = task['content']
         data['project'] = todoist.projects.get_by_id(task['project_id'])['name']
         data['priority'] = utils.parse_priority(task['priority'])
         data['tags'] = [
@@ -42,10 +41,20 @@ def migrate(interactive, no_sync):
         data['due'] = utils.parse_date(task['due_date_utc'])
         data['recur'] = utils.parse_recur(task['date_string'])
 
-        if not interactive:
+        important(f'Task {idx + 1} of {len(tasks)}: {name}\n')
+
+        if check_task_exists(tid):
+            info(f'Already exists (todoist_id={tid})\n')
+        elif not interactive:
             add_task(**data)
         else:
-            task_prompt(idx + 1, len(tasks), **data)
+            task_prompt(**data)
+
+
+def check_task_exists(tid):
+    """ Given a Taskwarrior ID, check if the task exists """
+    taskwarrior_id, _ = taskwarrior.get_task(todoist_id=tid)
+    return taskwarrior_id is not None
 
 
 def add_task(tid, name, project, tags, priority, entry, due, recur):
@@ -55,8 +64,16 @@ def add_task(tid, name, project, tags, priority, entry, due, recur):
     """
     info(f"Importing '{name}' ({project}) - ", nl=False)
     try:
-        tw_task = taskwarrior.task_add(name, project=project, tags=tags,
-                priority=priority, entry=entry, due=due, recur=recur)
+        tw_task = taskwarrior.task_add(
+            name,
+            project=project,
+            tags=tags,
+            priority=priority,
+            entry=entry,
+            due=due,
+            recur=recur,
+            todoist_id=tid,
+        )
     except:
         error('FAILED')
     else:
@@ -64,7 +81,7 @@ def add_task(tid, name, project, tags, priority, entry, due, recur):
         return tw_task
 
 
-def task_prompt(task_num, tasks_total, **task_data):
+def task_prompt(**task_data):
     """Interactively add tasks
 
     y - add task
@@ -102,7 +119,6 @@ def task_prompt(task_num, tasks_total, **task_data):
 
     response = None
     while response not in ('y', 'n'):
-        click.echo(important_msg(f'Task {task_num} of {tasks_total}'))
         prompt_text = (
             stringify_task(**task_data)
             + important_msg(f"\nImport this task?")
@@ -196,6 +212,12 @@ if __name__ == '__main__':
         exit('TODOIST_API_KEY environment variable not specified. Exiting.')
 
     todoist = TodoistAPI(todoist_api_key)
-    taskwarrior = TaskWarrior()
+
+    # Create the TaskWarrior client, overriding config to
+    # create a `todoist_id` field which we'll use to
+    # prevent duplicates
+    taskwarrior = TaskWarrior(config_overrides={
+        'uda.todoist_id.type': 'string',
+    })
     cli()
 

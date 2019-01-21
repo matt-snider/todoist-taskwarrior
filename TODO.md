@@ -1,6 +1,4 @@
 # TODO:
-* [ ] Prevent duplicates using Todoist ID
-    * e.g. `taskwarrior.filter_tasks({'todoistid.not': '...'})`
 * [ ] Support `start`, `until` and `for`
     * Don't do within recur parsing, reparse whole string
     * https://get.todoist.help/hc/en-us/articles/360000636289
