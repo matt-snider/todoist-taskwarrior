@@ -11,6 +11,7 @@ def test_hourly():
     assert utils.parse_recur('every 1 hour') == 'hourly'
     assert utils.parse_recur('every 2 hour') == '2 hours'
     assert utils.parse_recur('every 2 hours') == '2 hours'
+    assert utils.parse_recur('every 3 hour') == '3 hours'
     assert utils.parse_recur('every 3 hours') == '3 hours'
 
 

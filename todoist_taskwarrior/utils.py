@@ -111,7 +111,7 @@ RE_SPECIAL = re.compile(
 
 
 PERIOD_TO_SIMPLE = {
-    'hour': 'hour',
+    'hour': 'hourly',
     'day': 'daily',
     'week': 'weekly',
     'month': 'monthly',
