@@ -13,12 +13,22 @@ taskwarrior = None
 
 @click.group()
 def cli():
+    """Manage the migration of data from Todoist into Taskwarrior. """
     pass
 
 
 @cli.command()
 def synchronize():
-    """Sync the local task database and then exit. """
+    """Update the local Todoist task cache.
+    
+    This command accesses Todoist via the API and updates a local
+    cache before exiting. This can be useful to pre-load the tasks,
+    and means `migrate` can be run without a network connection.
+
+    NOTE - the local Todoist data cache is usually located at:
+
+        ~/.todoist-sync
+    """
 
     important('Syncing tasks with todoist... ', nl=False)
     todoist.sync()
@@ -26,10 +36,30 @@ def synchronize():
 
 
 @cli.command()
-@click.option('-i', '--interactive', is_flag=True, default=False)
-@click.option('--sync/--no-sync', default=True)
+@click.option('-i', '--interactive', is_flag=True, default=False,
+        help='Interactively choose which tasks to import and modify them '
+             'during the import.')
+@click.option('--sync/--no-sync', default=True,
+        help='Enable/disable Todoist synchronization of the local task cache.')
 @click.pass_context
 def migrate(ctx, interactive, sync):
+    """Migrate tasks from Todoist to Taskwarrior.
+
+    By default this command will synchronize with the Todoist servers
+    and then migrate all tasks to Taskwarrior.
+
+    Pass --no-sync to skip synchronization.
+
+    Passing -i or --interactive allows more control over the import, putting
+    the user into an interactive command loop. Per task, the user can decide
+    whether to skip, rename, change the priority, or change the tags, before
+    moving on to the next task.
+
+    This command can be run multiple times and will not duplicate tasks.
+    This is tracked in Taskwarrior by setting and detecting the
+    `todoist_id` property on the task.
+    """
+
     if sync:
         ctx.invoke(synchronize)
 
