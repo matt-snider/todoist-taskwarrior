@@ -97,6 +97,7 @@ def task_prompt(**task_data):
     r - rename task
     p - change priority
     t - change tags
+    q - quit immediately
     ? - print help
     """
     callbacks = {
@@ -120,6 +121,9 @@ def task_prompt(**task_data):
             **task_data,
             'priority': priority_prompt(task_data['priority']),
         },
+
+        # Quit
+        'q': lambda: exit(1),
 
         # Help message
         '?': lambda: task_prompt_help() or task_data,
