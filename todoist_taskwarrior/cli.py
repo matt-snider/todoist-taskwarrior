@@ -17,13 +17,21 @@ def cli():
 
 
 @cli.command()
+def synchronize():
+    """Sync the local task database and then exit. """
+
+    important('Syncing tasks with todoist... ', nl=False)
+    todoist.sync()
+    success('OK')
+
+
+@cli.command()
 @click.option('-i', '--interactive', is_flag=True, default=False)
-@click.option('--no-sync', is_flag=True, default=False)
-def migrate(interactive, no_sync):
-    if not no_sync:
-        important('Syncing tasks with todoist... ', nl=False)
-        todoist.sync()
-        success('OK')
+@click.option('--sync/--no-sync', default=True)
+@click.pass_context
+def migrate(ctx, interactive, sync):
+    if sync:
+        ctx.invoke(synchronize)
 
     tasks = todoist.items.all()
     important(f'Starting migration of {len(tasks)}...\n')
