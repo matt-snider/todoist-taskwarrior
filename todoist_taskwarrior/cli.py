@@ -162,8 +162,7 @@ def task_prompt(**task_data):
                 'Set priority',
                 default='',
                 show_default=False,
-                type=click.Choice([None, 'L', 'M', 'H']),
-                value_proc=lambda x: None if '' else x,
+                type=click.Choice(['L', 'M', 'H', '']),
             ),
         },
 
