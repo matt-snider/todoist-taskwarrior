@@ -1,5 +1,6 @@
 """Utilities for pretty output """
 
+import contextlib
 from click import echo, prompt as cprompt, style
 
 
@@ -47,3 +48,16 @@ def task(task):
         output += f'{key}: {value}\n'
 
     echo(output)
+
+
+@contextlib.contextmanager
+def with_feedback(description, success_status='OK', error_status='FAILED'):
+    info(f'{description}... ', nl=False)
+    try:
+        yield
+    except Exception as e:
+        error(f'{error_status} ({e})')
+        raise
+    else:
+        success(success_status)
+

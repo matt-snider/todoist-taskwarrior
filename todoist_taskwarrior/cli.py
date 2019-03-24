@@ -29,10 +29,8 @@ def synchronize():
 
         ~/.todoist-sync
     """
-
-    io.important('Syncing tasks with todoist... ', nl=False)
-    todoist.sync()
-    io.success('OK')
+    with io.with_feedback('Syncing tasks with todoist'):
+        todoist.sync()
 
 
 @cli.command()
@@ -100,9 +98,8 @@ def add_task(tid, name, project, tags, priority, entry, due, recur):
 
     Returns the taskwarrior task.
     """
-    io.info(f"Importing '{name}' ({project}) - ", nl=False)
-    try:
-        tw_task = taskwarrior.task_add(
+    with io.with_feedback(f"Importing '{name}' ({project})"):
+        return taskwarrior.task_add(
             name,
             project=project,
             tags=tags,
@@ -112,11 +109,6 @@ def add_task(tid, name, project, tags, priority, entry, due, recur):
             recur=recur,
             todoist_id=tid,
         )
-    except:
-        io.error('FAILED')
-    else:
-        io.success('OK')
-        return tw_task
 
 
 def task_prompt(**task_data):
