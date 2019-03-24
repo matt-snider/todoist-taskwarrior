@@ -4,7 +4,7 @@ import sys
 
 from taskw import TaskWarrior
 from todoist.api import TodoistAPI
-from . import utils
+from . import utils, io
 
 todoist = None
 taskwarrior = None
@@ -30,9 +30,9 @@ def synchronize():
         ~/.todoist-sync
     """
 
-    important('Syncing tasks with todoist... ', nl=False)
+    io.important('Syncing tasks with todoist... ', nl=False)
     todoist.sync()
-    success('OK')
+    io.success('OK')
 
 
 @cli.command()
@@ -64,7 +64,7 @@ def migrate(ctx, interactive, sync):
         ctx.invoke(synchronize)
 
     tasks = todoist.items.all()
-    important(f'Starting migration of {len(tasks)}...\n')
+    io.important(f'Starting migration of {len(tasks)}...')
     for idx, task in enumerate(tasks):
         data = {}
         tid = data['tid'] = task['id']
@@ -79,10 +79,10 @@ def migrate(ctx, interactive, sync):
         data['due'] = utils.parse_date(task['due_date_utc'])
         data['recur'] = utils.parse_recur(task['date_string'])
 
-        important(f'Task {idx + 1} of {len(tasks)}: {name}\n')
+        io.important(f'Task {idx + 1} of {len(tasks)}: {name}')
 
         if check_task_exists(tid):
-            info(f'Already exists (todoist_id={tid})\n')
+            io.info(f'Already exists (todoist_id={tid})')
         elif not interactive:
             add_task(**data)
         else:
@@ -100,7 +100,7 @@ def add_task(tid, name, project, tags, priority, entry, due, recur):
 
     Returns the taskwarrior task.
     """
-    info(f"Importing '{name}' ({project}) - ", nl=False)
+    io.info(f"Importing '{name}' ({project}) - ", nl=False)
     try:
         tw_task = taskwarrior.task_add(
             name,
@@ -113,9 +113,9 @@ def add_task(tid, name, project, tags, priority, entry, due, recur):
             todoist_id=tid,
         )
     except:
-        error('FAILED')
+        io.error('FAILED')
     else:
-        success('OK')
+        io.success('OK')
         return tw_task
 
 
@@ -137,36 +137,53 @@ def task_prompt(**task_data):
         # Rename
         'r': lambda: {
             **task_data,
-            'name': name_prompt(task_data['name']),
+            'name': io.prompt(
+                'Set name',
+                default=task_data['name'],
+                value_proc=lambda x: x.strip(),
+            ),
         },
 
         # Edit tags
         't': lambda: {
             **task_data,
-            'tags': tags_prompt(task_data['tags']),
+            'tags': io.prompt(
+                'Set tags (space delimited)',
+                default=' '.join(task_data['tags']),
+                show_default=False,
+                value_proc=lambda x: x.split(' '),
+            ),
         },
 
         # Edit priority
         'p': lambda: {
             **task_data,
-            'priority': priority_prompt(task_data['priority']),
+            'priority': io.prompt(
+                'Set priority',
+                default='',
+                show_default=False,
+                type=click.Choice([None, 'L', 'M', 'H']),
+                value_proc=lambda x: None if '' else x,
+            ),
         },
 
         # Quit
         'q': lambda: exit(1),
 
         # Help message
-        '?': lambda: task_prompt_help() or task_data,
+        # Note: this echoes prompt help and then returns the
+        # task_data unchanged.
+        '?': lambda: io.warn('\n'.join([
+            x.strip() for x in
+            task_prompt.__doc__.split('\n')
+        ])) or task_data,
     }
 
     response = None
     while response not in ('y', 'n'):
-        prompt_text = (
-            stringify_task(**task_data)
-            + important_msg(f"\nImport this task?")
-        )
-        response = click.prompt(
-            prompt_text,
+        io.task(task_data)
+        response = io.prompt(
+            "Import this task?",
             type=click.Choice(callbacks.keys()),
             show_choices=True,
         )
@@ -175,74 +192,10 @@ def task_prompt(**task_data):
         task_data = callbacks[response]()
 
     if response == 'n':
-        error('Skipping task\n')
+        io.warn('Skipping task')
         return
 
     return add_task(**task_data)
-
-
-def task_prompt_help():
-    lines = [
-        x.strip() for x in
-        task_prompt.__doc__.split('\n')
-    ]
-    error('\n'.join(lines))
-
-
-def tags_prompt(tags):
-    return click.prompt(
-        important_msg('Set tags'),
-        default=' '.join(tags),
-        show_default=False,
-        value_proc=lambda x: x.split(' ')
-    )
-
-
-def priority_prompt(priority):
-    return click.prompt(
-        important_msg('Set priority'),
-        default='',
-        type=click.Choice([None, 'L', 'M', 'H']),
-        value_proc=lambda x: None if '' else x,
-        show_default=False,
-    )
-
-
-def name_prompt(name):
-    return click.prompt(
-        important_msg('Set name'),
-        default=name,
-        value_proc=lambda x: x.strip()
-    )
-
-
-""" Output Utils """
-
-def important(msg, **kwargs):
-    click.echo(important_msg(msg), **kwargs)
-
-def important_msg(msg):
-    return click.style(msg, fg='blue', bold=True)
-
-def info(msg, **kwargs):
-    click.echo(msg, **kwargs)
-
-def success(msg, **kwargs):
-    click.echo(click.style(msg, fg='green', bold=True))
-
-def error(msg, **kwargs):
-    click.echo(click.style(msg, fg='red', bold=True))
-
-def stringify_task(**task_data):
-    string = ''
-    for key, value in task_data.items():
-        key = click.style(key, underline=True)
-        if isinstance(value, list):
-            value = ' '.join(value)
-        elif value is None:
-            value = ''
-        string += f'{key}: {value}\n'
-    return string
 
 
 """ Entrypoint """
@@ -251,7 +204,8 @@ if __name__ == '__main__':
     is_help_cmd = '-h' in sys.argv or '--help' in sys.argv
     todoist_api_key = os.getenv('TODOIST_API_KEY')
     if todoist_api_key is None and not is_help_cmd:
-        exit('TODOIST_API_KEY environment variable not specified. Exiting.')
+        io.error('TODOIST_API_KEY environment variable not specified. Exiting.')
+        exit(1)
 
     todoist = TodoistAPI(todoist_api_key)
 
