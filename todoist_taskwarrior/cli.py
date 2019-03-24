@@ -84,7 +84,7 @@ def migrate(ctx, interactive, sync):
         elif not interactive:
             add_task(**data)
         else:
-            task_prompt(**data)
+            add_task_interactive(**data)
 
 
 def check_task_exists(tid):
@@ -111,7 +111,7 @@ def add_task(tid, name, project, tags, priority, entry, due, recur):
         )
 
 
-def task_prompt(**task_data):
+def add_task_interactive(**task_data):
     """Interactively add tasks
 
     y - add task
@@ -166,7 +166,7 @@ def task_prompt(**task_data):
         # task_data unchanged.
         '?': lambda: io.warn('\n'.join([
             x.strip() for x in
-            task_prompt.__doc__.split('\n')
+            add_task_interactive.__doc__.split('\n')
         ])) or task_data,
     }
 
