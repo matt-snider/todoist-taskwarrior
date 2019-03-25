@@ -90,7 +90,7 @@ def migrate(ctx, interactive, sync):
         ctx.invoke(synchronize)
 
     tasks = todoist.items.all()
-    io.important(f'Starting migration of {len(tasks)}...')
+    io.important(f'Starting migration of {len(tasks)} tasks...')
     for idx, task in enumerate(tasks):
         data = {}
         tid = data['tid'] = task['id']
