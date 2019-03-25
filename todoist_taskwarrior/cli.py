@@ -6,8 +6,15 @@ from taskw import TaskWarrior
 from todoist.api import TodoistAPI
 from . import utils, io
 
+
+# This is the location where the todoist
+# data will be cached.
+TODOIST_CACHE = '~/.todoist-sync/'
+
+
 todoist = None
 taskwarrior = None
+
 
 """ CLI Commands """
 
@@ -31,6 +38,27 @@ def synchronize():
     """
     with io.with_feedback('Syncing tasks with todoist'):
         todoist.sync()
+
+
+@cli.command()
+@click.confirmation_option(prompt=f'Are you sure you want to delete {TODOIST_CACHE}?')
+def clean():
+    """Remove the data stored in the Todoist task cache.
+
+    NOTE - the local Todoist data cache is usually located at:
+
+        ~/.todoist-sync
+    """
+    cache_dir = os.path.expanduser(TODOIST_CACHE)
+
+    # Delete all files in directory
+    for file_entry in os.scandir(cache_dir):
+        with io.with_feedback(f'Removing file {file_entry.path}'):
+            os.remove(file_entry)
+
+    # Delete directory
+    with io.with_feedback(f'Removing directory {cache_dir}'):
+        os.rmdir(cache_dir)
 
 
 @cli.command()
@@ -198,7 +226,7 @@ if __name__ == '__main__':
         io.error('TODOIST_API_KEY environment variable not specified. Exiting.')
         exit(1)
 
-    todoist = TodoistAPI(todoist_api_key)
+    todoist = TodoistAPI(todoist_api_key, cache=TODOIST_CACHE)
 
     # Create the TaskWarrior client, overriding config to
     # create a `todoist_id` field which we'll use to
