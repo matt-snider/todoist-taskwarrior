@@ -1,5 +1,32 @@
+import click
 import re
 from datetime import datetime
+
+""" Validation """
+
+def validate_map_project(ctx, param, value):
+    map_project = {}
+    for mapping in value:
+        try:
+            src, dst = mapping.split('=', 2)
+        except ValueError:
+            raise click.BadParameter('--map-project needs to be of the form SRC=DST')
+
+        if dst == '':
+            dst = None
+        map_project[src] = dst
+    return map_project
+
+
+""" Mappings """
+
+def try_map(m, value):
+    """Maps/translates `value` if it is present in `m`. """
+    if value in m:
+        return m[value]
+    else:
+        return value
+
 
 """ Priorities """
 
@@ -12,7 +39,7 @@ def parse_priority(priority):
     These values map very easily to eachother, as Todoist priority 1 indicates that
     no priority has been set.
     """
-    return PRIORITY_MAP[priority]
+    return PRIORITY_MAP[int(priority)]
 
 
 """ Dates """

@@ -27,7 +27,7 @@ def cli():
 @cli.command()
 def synchronize():
     """Update the local Todoist task cache.
-    
+
     This command accesses Todoist via the API and updates a local
     cache before exiting. This can be useful to pre-load the tasks,
     and means `migrate` can be run without a network connection.
@@ -67,8 +67,12 @@ def clean():
              'during the import.')
 @click.option('--sync/--no-sync', default=True,
         help='Enable/disable Todoist synchronization of the local task cache.')
+@click.option('-p', '--map-project', metavar='SRC=DST', multiple=True,
+        callback=utils.validate_map_project,
+        help='Project names specified will be translated from SRC to DST. '
+             'If DST is omitted, the project will be unset when SRC matches.')
 @click.pass_context
-def migrate(ctx, interactive, sync):
+def migrate(ctx, interactive, sync, map_project):
     """Migrate tasks from Todoist to Taskwarrior.
 
     By default this command will synchronize with the Todoist servers
@@ -80,6 +84,12 @@ def migrate(ctx, interactive, sync):
     the user into an interactive command loop. Per task, the user can decide
     whether to skip, rename, change the priority, or change the tags, before
     moving on to the next task.
+
+    Use --map-project to change or remove the project. For example, in the
+    following invocation, the project FOO will be changed to BAR and the
+    project property will be unset when it is BAZ:
+    \r
+    --map-project FOO=BAR --map-project BAZ=
 
     This command can be run multiple times and will not duplicate tasks.
     This is tracked in Taskwarrior by setting and detecting the
@@ -95,7 +105,10 @@ def migrate(ctx, interactive, sync):
         data = {}
         tid = data['tid'] = task['id']
         name = data['name'] = task['content']
-        data['project'] = todoist.projects.get_by_id(task['project_id'])['name']
+        data['project'] = utils.try_map(
+            map_project,
+            todoist.projects.get_by_id(task['project_id'])['name'],
+        )
         data['priority'] = utils.parse_priority(task['priority'])
         data['tags'] = [
             todoist.labels.get_by_id(l_id)['name']
