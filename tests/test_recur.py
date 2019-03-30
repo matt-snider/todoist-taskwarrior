@@ -121,30 +121,30 @@ def test_every_dow_ordinal_recurrence(ordinal, dow):
     assert utils.parse_recur(f'every {ordinal} {dow}') == f'{expected} weeks'
 
 
-# def test_day_of_week_short_forms():
-#     assert utils.parse_recur('every mo') == 'weekly'
-#     assert utils.parse_recur('every mon') == 'weekly'
+def test_day_of_week_short_forms():
+    assert utils.parse_recur('every mo') == 'weekly'
+    assert utils.parse_recur('every mon') == 'weekly'
 
-#     assert utils.parse_recur('every tu') == 'weekly'
-#     assert utils.parse_recur('every tue') == 'weekly'
-#     assert utils.parse_recur('every tues') == 'weekly'
+    assert utils.parse_recur('every tu') == 'weekly'
+    assert utils.parse_recur('every tue') == 'weekly'
+    assert utils.parse_recur('every tues') == 'weekly'
 
-#     assert utils.parse_recur('every we') == 'weekly'
-#     assert utils.parse_recur('every wed') == 'weekly'
-#     assert utils.parse_recur('every weds') == 'weekly'
+    assert utils.parse_recur('every we') == 'weekly'
+    assert utils.parse_recur('every wed') == 'weekly'
+    assert utils.parse_recur('every weds') == 'weekly'
 
-#     assert utils.parse_recur('every th') == 'weekly'
-#     assert utils.parse_recur('every thu') == 'weekly'
-#     assert utils.parse_recur('every thurs') == 'weekly'
+    assert utils.parse_recur('every th') == 'weekly'
+    assert utils.parse_recur('every thu') == 'weekly'
+    assert utils.parse_recur('every thurs') == 'weekly'
 
-#     assert utils.parse_recur('every fr') == 'weekly'
-#     assert utils.parse_recur('every fri') == 'weekly'
+    assert utils.parse_recur('every fr') == 'weekly'
+    assert utils.parse_recur('every fri') == 'weekly'
 
-#     assert utils.parse_recur('every sa') == 'weekly'
-#     assert utils.parse_recur('every sat') == 'weekly'
+    assert utils.parse_recur('every sa') == 'weekly'
+    assert utils.parse_recur('every sat') == 'weekly'
 
-#     assert utils.parse_recur('every su') == 'weekly'
-#     assert utils.parse_recur('every sun') == 'weekly'
+    assert utils.parse_recur('every su') == 'weekly'
+    assert utils.parse_recur('every sun') == 'weekly'
 
 
 def test_day_of_month():
