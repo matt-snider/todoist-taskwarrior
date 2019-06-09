@@ -17,17 +17,17 @@ def validate(fn, value):
     return fn(None, None, value)
 
 
-def test_validate_map_project():
+def test_validate_map():
     # Simple
-    assert validate(utils.validate_map_project, ('HELLO=WORLD',)) == {'HELLO': 'WORLD'}
+    assert validate(utils.validate_map, ('HELLO=WORLD',)) == {'HELLO': 'WORLD'}
 
     # Missing DST
-    assert validate(utils.validate_map_project, ('HELLO=',)) == {'HELLO': None}
+    assert validate(utils.validate_map, ('HELLO=',)) == {'HELLO': None}
 
     # Multiple
-    assert validate(utils.validate_map_project, ('FOO=BAR', 'BAR=BAZZ')) == {'FOO': 'BAR', 'BAR': 'BAZZ'}
+    assert validate(utils.validate_map, ('FOO=BAR', 'BAR=BAZZ')) == {'FOO': 'BAR', 'BAR': 'BAZZ'}
 
     # Invalid, no '='
     with pytest.raises(click.BadParameter):
-        assert validate(utils.validate_map_project, ('FOO',)) == None
+        assert validate(utils.validate_map, ('FOO',)) == None
 

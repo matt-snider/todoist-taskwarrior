@@ -68,11 +68,15 @@ def clean():
 @click.option('--sync/--no-sync', default=True,
         help='Enable/disable Todoist synchronization of the local task cache.')
 @click.option('-p', '--map-project', metavar='SRC=DST', multiple=True,
-        callback=utils.validate_map_project,
+        callback=utils.validate_map,
         help='Project names specified will be translated from SRC to DST. '
              'If DST is omitted, the project will be unset when SRC matches.')
+@click.option('-t', '--map-tag', metavar='SRC=DST', multiple=True,
+        callback=utils.validate_map,
+        help='Tags specified will be translated from SRC to DST. '
+             'If DST is omitted, the tag will be removed when SRC matches.')
 @click.pass_context
-def migrate(ctx, interactive, sync, map_project):
+def migrate(ctx, interactive, sync, map_project, map_tag):
     """Migrate tasks from Todoist to Taskwarrior.
 
     By default this command will synchronize with the Todoist servers
@@ -111,7 +115,7 @@ def migrate(ctx, interactive, sync, map_project):
         )
         data['priority'] = utils.parse_priority(task['priority'])
         data['tags'] = [
-            todoist.labels.get_by_id(l_id)['name']
+            utils.try_map(map_tag, todoist.labels.get_by_id(l_id)['name'])
             for l_id in task['labels']
         ]
         data['entry'] = utils.parse_date(task['date_added'])

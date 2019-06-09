@@ -4,7 +4,7 @@ from datetime import datetime
 
 """ Validation """
 
-def validate_map_project(ctx, param, value):
+def validate_map(ctx, param, value):
     map_project = {}
     for mapping in value:
         try:
