@@ -41,6 +41,15 @@ recur: 3 days
 By default, `migrate` will refetch all tasks from Todoist on each run. To skip
 this step and use the cached data without refetching, use the --no-sync flag.
 
+The flags `--map-project` and `--map-tag` can be specified multiple times to translate or completely remove specific flags
+
+```sh
+$ python -m todoist_taskwarrior.cli migrate \
+    --map-project Errands=chores \
+    --map-project 'XYZ Corp'=work \
+    --map-tag     books=reading
+```
+
 ## Development
 
 ### Testing
