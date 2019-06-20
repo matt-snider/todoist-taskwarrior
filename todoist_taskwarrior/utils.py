@@ -41,6 +41,14 @@ def parse_priority(priority):
     """
     return PRIORITY_MAP[int(priority)]
 
+""" Strings """
+
+def maybe_quote_ws(value):
+    """Surrounds a value with single quotes if it contains whitespace. """
+    if any(x == ' ' or x == '\t' for x in value):
+        return "'" + value + "'"
+    return value
+
 
 """ Dates """
 

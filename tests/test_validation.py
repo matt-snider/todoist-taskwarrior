@@ -31,3 +31,6 @@ def test_validate_map():
     with pytest.raises(click.BadParameter):
         assert validate(utils.validate_map, ('FOO',)) == None
 
+    # Hierarchical src
+    assert validate(utils.validate_map, ('foo.bar=bazz',)) == {'foo.bar': 'bazz'}
+    assert validate(utils.validate_map, ('foo bar.bazz=bazz',)) == {'foo bar.bazz': 'bazz'}

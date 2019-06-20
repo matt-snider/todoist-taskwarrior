@@ -89,11 +89,16 @@ def migrate(ctx, interactive, sync, map_project, map_tag):
     whether to skip, rename, change the priority, or change the tags, before
     moving on to the next task.
 
-    Use --map-project to change or remove the project. For example, in the
-    following invocation, the project FOO will be changed to BAR and the
-    project property will be unset when it is BAZ:
+    Use --map-project to change or remove the project. Project hierarchies will
+    be period-delimited during conversion. For example in the following,
+    'Work Errands' and 'House Errands' will be both be changed to 'errands',
+    'Programming.Open Source' will be changed to 'oss', and the project will be
+    removed when it is 'Taxes':
     \r
-    --map-project FOO=BAR --map-project BAZ=
+    --map-project 'Work Errands'=errands
+    --map-project 'House Errands'=errands
+    --map-project 'Programming.Open Source'=oss
+    --map-project Taxes=
 
     This command can be run multiple times and will not duplicate tasks.
     This is tracked in Taskwarrior by setting and detecting the
@@ -109,15 +114,31 @@ def migrate(ctx, interactive, sync, map_project, map_tag):
         data = {}
         tid = data['tid'] = task['id']
         name = data['name'] = task['content']
-        data['project'] = utils.try_map(
+
+        # Project
+        p = todoist.projects.get_by_id(task['project_id'])
+        project_hierarchy = [p]
+        while p['parent_id']:
+            p = todoist.projects.get_by_id(p['parent_id'])
+            project_hierarchy.insert(0, p)
+
+        project_name = '.'.join(p['name'] for p in project_hierarchy)
+        project_name = utils.try_map(
             map_project,
-            todoist.projects.get_by_id(task['project_id'])['name'],
+            project_name
         )
+        data['project'] = utils.maybe_quote_ws(project_name)
+
+        # Priority
         data['priority'] = utils.parse_priority(task['priority'])
+
+        # Tags
         data['tags'] = [
             utils.try_map(map_tag, todoist.labels.get_by_id(l_id)['name'])
             for l_id in task['labels']
         ]
+
+        # Dates
         data['entry'] = utils.parse_date(task['date_added'])
         data['due'] = utils.parse_date(task['due_date_utc'])
         data['recur'] = utils.parse_recur(task['date_string'])
