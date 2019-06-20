@@ -169,5 +169,9 @@ def test_annually():
 
 
 def test_unsupported():
-    pass
+    with pytest.raises(Exception):
+        utils.parse_recur('every mon,tues,weds')
+
+    with pytest.raises(Exception):
+        utils.parse_recur('every monday,tuesday,wednesday')
 

@@ -86,13 +86,16 @@ def parse_recur(date_string):
     # - trim leading, trailing, and, duplicate spaces
     # - convert to lowercase
     date_string = ' '.join(date_string.lower().strip().split())
-    return (
+    result = (
         _recur_single_cycle(date_string) or
         _recur_multi_cycle(date_string) or
         _recur_day_of_week(date_string) or
         _recur_day_of_month(date_string) or
         _recur_special(date_string)
     )
+    if not result:
+        raise Exception("Recurrence not supported: %s" % date_string)
+    return result
 
 
 # Atoms
