@@ -1,6 +1,7 @@
 import click
 import re
 from datetime import datetime
+from .errors import UnsupportedRecurrence
 
 """ Validation """
 
@@ -94,7 +95,7 @@ def parse_recur(date_string):
         _recur_special(date_string)
     )
     if not result:
-        raise Exception("Recurrence not supported: %s" % date_string)
+        raise UnsupportedRecurrence(date_string)
     return result
 
 

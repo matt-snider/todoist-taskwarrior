@@ -4,6 +4,7 @@ Tests parsing `recur` strings from Todoist `date_string`s
 """
 import pytest
 from todoist_taskwarrior import utils
+from todoist_taskwarrior import errors
 
 
 def test_hourly():
@@ -169,9 +170,9 @@ def test_annually():
 
 
 def test_unsupported():
-    with pytest.raises(Exception):
+    with pytest.raises(errors.UnsupportedRecurrence):
         utils.parse_recur('every mon,tues,weds')
 
-    with pytest.raises(Exception):
+    with pytest.raises(errors.UnsupportedRecurrence):
         utils.parse_recur('every monday,tuesday,wednesday')
 
