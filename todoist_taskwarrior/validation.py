@@ -18,6 +18,6 @@ def validate_map(ctx, param, value):
 
 def validate_recur(value):
     try:
-        return utils.parse_recur(value)
+        return utils.parse_recur_string(value)
     except errors.UnsupportedRecurrence as e:
         raise click.BadParameter(e)

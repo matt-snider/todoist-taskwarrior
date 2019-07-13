@@ -146,8 +146,8 @@ def migrate(ctx, interactive, sync, map_project, map_tag):
 
         # Dates
         data['entry'] = utils.parse_date(task['date_added'])
-        data['due'] = utils.parse_date(task['due_date_utc'])
-        data['recur'] = parse_recur_or_prompt(task['date_string'])
+        data['due'] = utils.parse_due(utils.try_get_model_prop(task, 'due'))
+        data['recur'] = parse_recur_or_prompt(utils.try_get_model_prop(task, 'due'))
 
         if not interactive:
             add_task(**data)
@@ -279,11 +279,11 @@ def add_task_interactive(**task_data):
     return add_task(**task_data)
 
 
-def parse_recur_or_prompt(value):
+def parse_recur_or_prompt(due):
     try:
-        return utils.parse_recur(value)
+        return utils.parse_recur(due)
     except errors.UnsupportedRecurrence:
-        io.error('Unsupported recurrence: %s. Please enter a valid value' % value)
+        io.error("Unsupported recurrence: '%s'. Please enter a valid value" % due['string'])
         return io.prompt(
             'Set recurrence (todoist style)',
             default='',

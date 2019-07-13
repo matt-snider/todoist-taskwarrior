@@ -1,6 +1,6 @@
 import click
 import re
-from datetime import datetime
+import dateutil.parser
 from .errors import UnsupportedRecurrence
 
 
@@ -12,6 +12,14 @@ def try_map(m, value):
         return m[value]
     else:
         return value
+
+
+def try_get_model_prop(m, key, default=None):
+    """ The todoist models don't seem to have the `get()` method and throw KeyErrors """
+    try:
+        return m[key]
+    except KeyError:
+        return default
 
 
 """ Priorities """
@@ -38,6 +46,23 @@ def maybe_quote_ws(value):
 
 """ Dates """
 
+def parse_due(due):
+    """Parse a due date from the due object.
+
+    e.g. {
+        "date": "2016-12-0T12:00:00",
+        "timezone": null,
+        "string": "every day at 12",
+        "lang": "en",
+        "is_recurring": true
+    }
+    """
+    if not due:
+        return None
+
+    return parse_date(due['date'])
+
+
 def parse_date(date):
     """ Converts a date from Todoist to Taskwarrior.
 
@@ -47,10 +72,17 @@ def parse_date(date):
     if not date:
         return None
 
-    return datetime.strptime(date, '%a %d %b %Y %H:%M:%S %z').isoformat()
+    return dateutil.parser.parse(date).isoformat()
 
 
-def parse_recur(date_string):
+def parse_recur(due):
+    """Given a due object, extracts the recur """
+    if not due or not due['is_recurring']:
+        return None
+    return parse_recur_string(due['string'])
+
+
+def parse_recur_string(date_string):
     """ Parses a Todoist `date_string` to extract a `recur` string for Taskwarrior.
 
     Field:

@@ -1,5 +1,5 @@
 Click==7.0
-todoist-python==7.0.18
+todoist-python==8.0.0
 
 # Temporarily use this until upstream PR #121 is merged
 # https://github.com/ralphbean/taskw/pull/121 
