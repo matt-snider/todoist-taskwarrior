@@ -115,6 +115,12 @@ def migrate(ctx, interactive, sync, map_project, map_tag):
         tid = data['tid'] = task['id']
         name = data['name'] = task['content']
 
+        # Log message and check if exists
+        io.important(f'Task {idx + 1} of {len(tasks)}: {name}')
+        if check_task_exists(tid):
+            io.info(f'Already exists (todoist_id={tid})')
+            continue
+
         # Project
         p = todoist.projects.get_by_id(task['project_id'])
         project_hierarchy = [p]
@@ -143,11 +149,7 @@ def migrate(ctx, interactive, sync, map_project, map_tag):
         data['due'] = utils.parse_date(task['due_date_utc'])
         data['recur'] = parse_recur_or_prompt(task['date_string'])
 
-        io.important(f'Task {idx + 1} of {len(tasks)}: {name}')
-
-        if check_task_exists(tid):
-            io.info(f'Already exists (todoist_id={tid})')
-        elif not interactive:
+        if not interactive:
             add_task(**data)
         else:
             add_task_interactive(**data)
