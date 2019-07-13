@@ -25,6 +25,9 @@ def test_every_n_days():
     assert utils.parse_recur('every 3 day') == '3 days'
     assert utils.parse_recur('every 3 days') == '3 days'
 
+    # With time (which should be ignored since it's encoded in due_date anyways)
+    assert utils.parse_recur('every day at 19:00') == 'daily'
+
 
 def test_special():
     # Indicates daily at 9am - the time is saved in the `due` property
@@ -42,6 +45,7 @@ def test_weekly():
     assert utils.parse_recur('every 1 week') == 'weekly'
     assert utils.parse_recur('every 1 weeks') == 'weekly'
     assert utils.parse_recur('weekly') == 'weekly'
+    assert utils.parse_recur('every other week') == '2 weeks'
     assert utils.parse_recur('every 3 week') == '3 weeks'
     assert utils.parse_recur('every 3 weeks') == '3 weeks'
 
@@ -51,11 +55,13 @@ def test_monthly():
     assert utils.parse_recur('every 1 month') == 'monthly'
     assert utils.parse_recur('every 1 months') == 'monthly'
     assert utils.parse_recur('monthly') == 'monthly'
+    assert utils.parse_recur('every other month') == '2 months'
     assert utils.parse_recur('every 2 months') == '2 months'
 
     # ordinal
     assert utils.parse_recur('every 2nd month') == '2 months'
     assert utils.parse_recur('every 3rd month') == '3 months'
+
 
 DAYS_OF_WEEK = [
     # Monday
@@ -105,7 +111,10 @@ def test_every_dow_has_weekly_recurrence(dow):
     """
     assert utils.parse_recur(f'ev {dow}') == 'weekly'
     assert utils.parse_recur(f'every {dow}') == 'weekly'
+    assert utils.parse_recur(f'every other {dow}') == '2 weeks'
 
+    # With time (which should be ignored since it's encoded in due_date anyways)
+    assert utils.parse_recur(f'every {dow} at 17:00') == 'weekly'
 
 @pytest.mark.parametrize('ordinal', [
     ('2', 2),

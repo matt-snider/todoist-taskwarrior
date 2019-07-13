@@ -103,6 +103,7 @@ def parse_recur(date_string):
 _PERIOD = r'(?P<period>hour|day|week|month|year)s?'
 _EVERY = r'ev(ery)?'
 _CYCLES = r'((?P<cycles>\d+)(st|nd|rd|th)?)'
+_OTHER  = r'(?P<other>other)'
 _SIMPLE = r'(?P<simple>daily|weekly|monthly|yearly)'
 _DOW = (
     r'((?P<dayofweek>('
@@ -114,18 +115,19 @@ _DOW = (
     r'|su(n(day)?)?'
     r')))'
 )
+_IGNORED = r'(\sat (\d{1,2}:\d{1,2})|(\d{1,2}(am|pm)))?'
 
 # A single cycle recurrence is one of:
 # - daily, weekly, monthly, yearly
 # - every day, every week, every month, every year
 # - every 1 day, every 1 week, every 1 month, every 1 year
 RE_SINGLE_CYCLE = re.compile(
-    fr'^(({_EVERY}\s(1\s)?{_PERIOD})|{_SIMPLE})$'
+    fr'^(({_EVERY}\s(1\s)?{_PERIOD})|{_SIMPLE}){_IGNORED}$'
 )
 
 # A multi cycle recurrence is of the form: every N <period>s
 RE_MULTI_CYCLE = re.compile(
-    fr'^{_EVERY}\s({_CYCLES}|other)\s{_PERIOD}$'
+    fr'^{_EVERY}\s({_CYCLES}|other)\s{_PERIOD}{_IGNORED}$'
 )
 
 
@@ -133,13 +135,13 @@ RE_MULTI_CYCLE = re.compile(
 # - every (monday | tuesday | ...)
 # - every Nth (monday | tuesday | ...)
 RE_EVERY_DOW = re.compile(
-    fr'^{_EVERY}\s({_CYCLES}\s)?{_DOW}$'
+    fr'^{_EVERY}\s(({_CYCLES}|{_OTHER})\s)?{_DOW}{_IGNORED}$'
 )
 
 
 # A day of month recurrence is of the form: every Nth
 RE_EVERY_DOM = re.compile(
-    fr'^{_EVERY}\s{_CYCLES}$'
+    fr'^{_EVERY}\s{_CYCLES}{_IGNORED}$'
 )
 
 
@@ -194,10 +196,14 @@ def _recur_day_of_week(date_string):
 
     groups = match.groupdict()
     day_of_week = groups['dayofweek']
+
     if groups['cycles']:
         cycles = groups['cycles']
+    elif groups['other']:
+        cycles = 2
     else:
         cycles = 1
+
     return 'weekly' if cycles == 1 else f'{cycles} weeks'
 
 
