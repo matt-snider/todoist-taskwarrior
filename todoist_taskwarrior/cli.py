@@ -155,8 +155,8 @@ def migrate(ctx, interactive, sync, map_project, map_tag):
 
 def check_task_exists(tid):
     """ Given a Taskwarrior ID, check if the task exists """
-    taskwarrior_id, _ = taskwarrior.get_task(todoist_id=tid)
-    return taskwarrior_id is not None
+    _, task = taskwarrior.get_task(todoist_id=tid)
+    return bool(task)
 
 
 def add_task(tid, name, project, tags, priority, entry, due, recur):
