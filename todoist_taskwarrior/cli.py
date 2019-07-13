@@ -141,7 +141,7 @@ def migrate(ctx, interactive, sync, map_project, map_tag):
         # Dates
         data['entry'] = utils.parse_date(task['date_added'])
         data['due'] = utils.parse_date(task['due_date_utc'])
-        data['recur'] = utils.parse_recur(task['date_string'])
+        data['recur'] = parse_recur_or_prompt(task['date_string'])
 
         io.important(f'Task {idx + 1} of {len(tasks)}: {name}')
 
@@ -230,7 +230,7 @@ def add_task_interactive(**task_data):
             **task_data,
             'recur': io.prompt(
                 'Set recurrence (todoist style)',
-                default=task_data['recur'],
+                default='',
                 value_proc=validation.validate_recur,
             ),
         },
@@ -265,6 +265,18 @@ def add_task_interactive(**task_data):
         return
 
     return add_task(**task_data)
+
+
+def parse_recur_or_prompt(value):
+    try:
+        return utils.parse_recur(value)
+    except errors.UnsupportedRecurrence:
+        io.error('Unsupported recurrence: %s. Please enter a valid value' % value)
+        return io.prompt(
+            'Set recurrence (todoist style)',
+            default='',
+            value_proc=validation.validate_recur,
+        )
 
 
 """ Entrypoint """
