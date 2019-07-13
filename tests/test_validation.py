@@ -4,7 +4,7 @@ Test argument/option validations
 """
 import click
 import pytest
-from todoist_taskwarrior import utils
+from todoist_taskwarrior import validation
 
 
 def validate(fn, value):
@@ -19,18 +19,18 @@ def validate(fn, value):
 
 def test_validate_map():
     # Simple
-    assert validate(utils.validate_map, ('HELLO=WORLD',)) == {'HELLO': 'WORLD'}
+    assert validate(validation.validate_map, ('HELLO=WORLD',)) == {'HELLO': 'WORLD'}
 
     # Missing DST
-    assert validate(utils.validate_map, ('HELLO=',)) == {'HELLO': None}
+    assert validate(validation.validate_map, ('HELLO=',)) == {'HELLO': None}
 
     # Multiple
-    assert validate(utils.validate_map, ('FOO=BAR', 'BAR=BAZZ')) == {'FOO': 'BAR', 'BAR': 'BAZZ'}
+    assert validate(validation.validate_map, ('FOO=BAR', 'BAR=BAZZ')) == {'FOO': 'BAR', 'BAR': 'BAZZ'}
 
     # Invalid, no '='
     with pytest.raises(click.BadParameter):
-        assert validate(utils.validate_map, ('FOO',)) == None
+        assert validate(validation.validate_map, ('FOO',)) == None
 
     # Hierarchical src
-    assert validate(utils.validate_map, ('foo.bar=bazz',)) == {'foo.bar': 'bazz'}
-    assert validate(utils.validate_map, ('foo bar.bazz=bazz',)) == {'foo bar.bazz': 'bazz'}
+    assert validate(validation.validate_map, ('foo.bar=bazz',)) == {'foo.bar': 'bazz'}
+    assert validate(validation.validate_map, ('foo bar.bazz=bazz',)) == {'foo bar.bazz': 'bazz'}

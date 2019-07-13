@@ -4,7 +4,7 @@ import sys
 
 from taskw import TaskWarrior
 from todoist.api import TodoistAPI
-from . import utils, io
+from . import errors, io, utils, validation
 
 
 # This is the location where the todoist
@@ -68,11 +68,11 @@ def clean():
 @click.option('--sync/--no-sync', default=True,
         help='Enable/disable Todoist synchronization of the local task cache.')
 @click.option('-p', '--map-project', metavar='SRC=DST', multiple=True,
-        callback=utils.validate_map,
+        callback=validation.validate_map,
         help='Project names specified will be translated from SRC to DST. '
              'If DST is omitted, the project will be unset when SRC matches.')
 @click.option('-t', '--map-tag', metavar='SRC=DST', multiple=True,
-        callback=utils.validate_map,
+        callback=validation.validate_map,
         help='Tags specified will be translated from SRC to DST. '
              'If DST is omitted, the tag will be removed when SRC matches.')
 @click.pass_context
@@ -182,9 +182,10 @@ def add_task_interactive(**task_data):
 
     y - add task
     n - skip task
-    r - rename task
+    d - change description
     p - change priority
     t - change tags
+    r - change recur
     q - quit immediately
     ? - print help
     """
@@ -193,7 +194,7 @@ def add_task_interactive(**task_data):
         'n': lambda: task_data,
 
         # Rename
-        'r': lambda: {
+        'd': lambda: {
             **task_data,
             'name': io.prompt(
                 'Set name',
@@ -223,6 +224,17 @@ def add_task_interactive(**task_data):
                 type=click.Choice(['L', 'M', 'H', '']),
             ),
         },
+
+        # Edit recur
+        'r': lambda: {
+            **task_data,
+            'recur': io.prompt(
+                'Set recurrence (todoist style)',
+                default=task_data['recur'],
+                value_proc=validation.validate_recur,
+            ),
+        },
+
 
         # Quit
         'q': lambda: exit(1),

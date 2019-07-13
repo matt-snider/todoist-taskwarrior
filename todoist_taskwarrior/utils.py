@@ -3,21 +3,6 @@ import re
 from datetime import datetime
 from .errors import UnsupportedRecurrence
 
-""" Validation """
-
-def validate_map(ctx, param, value):
-    map_project = {}
-    for mapping in value:
-        try:
-            src, dst = mapping.split('=', 2)
-        except ValueError:
-            raise click.BadParameter('--map-project needs to be of the form SRC=DST')
-
-        if dst == '':
-            dst = None
-        map_project[src] = dst
-    return map_project
-
 
 """ Mappings """
 
