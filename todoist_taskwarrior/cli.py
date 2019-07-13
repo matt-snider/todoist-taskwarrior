@@ -183,6 +183,7 @@ def add_task_interactive(**task_data):
     y - add task
     n - skip task
     d - change description
+    P - change project
     p - change priority
     t - change tags
     r - change recur
@@ -211,6 +212,15 @@ def add_task_interactive(**task_data):
                 default=' '.join(task_data['tags']),
                 show_default=False,
                 value_proc=lambda x: x.split(' '),
+            ),
+        },
+
+        # Edit project
+        'P': lambda: {
+            **task_data,
+            'project': io.prompt(
+                'Set project',
+                default=task_data['project'],
             ),
         },
 
