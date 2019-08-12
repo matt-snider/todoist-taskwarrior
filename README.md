@@ -50,6 +50,10 @@ $ python -m todoist_taskwarrior.cli migrate \
     --map-tag     books=reading
 ```
 
+## Other tools
+
+* A fork that has been extended with synchronization: [webmeisterei/todoist-taskwarrior/](https://git.webmeisterei.com/webmeisterei/todoist-taskwarrior/) by [@pcdummy](https://github.com/pcdummy)
+
 ## Development
 
 ### Testing
