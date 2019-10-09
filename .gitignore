@@ -38,3 +38,6 @@ pip-delete-this-directory.txt
 # Environments
 venv/
 
+# Sandbox
+sandbox/data
+

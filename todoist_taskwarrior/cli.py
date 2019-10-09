@@ -19,11 +19,30 @@ taskwarrior = None
 """ CLI Commands """
 
 @click.group()
+@click.option('--todoist-api-key', envvar='TODOIST_API_KEY', required=True)
+@click.option('--tw-config-file', envvar='TASKRC', default='~/.taskrc')
 @click.option('--debug', is_flag=True, default=False)
-def cli(debug):
+def cli(todoist_api_key, tw_config_file, debug):
     """Manage the migration of data from Todoist into Taskwarrior. """
+    global todoist, taskwarrior
+
+    # Configure Todoist with API key and cache
+    todoist = TodoistAPI(todoist_api_key, cache=TODOIST_CACHE)
+
+    # Create the TaskWarrior client, overriding config with `todoist_id` field
+    # which we will use to track migrated tasks and prevent imports.
+    # The path to the taskwarrior config file can be set with the flag, but
+    # otherwise, the TASKRC envvar will be used if present. The taskwarrior
+    # default value is used if neither are specified.
+    taskwarrior = TaskWarrior(
+        config_filename=tw_config_file,
+        config_overrides={ 'uda.todoist_id.type': 'string' },
+    )
+
+    # Setup logging
     level = logging.DEBUG if debug else logging.INFO
     logging.basicConfig(level=level)
+
 
 
 @cli.command()
@@ -308,19 +327,5 @@ def parse_recur_or_prompt(due):
 """ Entrypoint """
 
 if __name__ == '__main__':
-    is_help_cmd = '-h' in sys.argv or '--help' in sys.argv
-    todoist_api_key = os.getenv('TODOIST_API_KEY')
-    if todoist_api_key is None and not is_help_cmd:
-        io.error('TODOIST_API_KEY environment variable not specified. Exiting.')
-        exit(1)
-
-    todoist = TodoistAPI(todoist_api_key, cache=TODOIST_CACHE)
-
-    # Create the TaskWarrior client, overriding config to
-    # create a `todoist_id` field which we'll use to
-    # prevent duplicates
-    taskwarrior = TaskWarrior(config_overrides={
-        'uda.todoist_id.type': 'string',
-    })
     cli()
 

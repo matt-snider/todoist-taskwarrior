@@ -1,0 +1,10 @@
+# Taskwarrior program configuration file.
+
+data.location=./sandbox/data
+locking=on
+
+recurrence=yes
+recurrence.limit=1
+
+uda.todoist_id.type=string
+uda.todoist_id.label=todoist_id
