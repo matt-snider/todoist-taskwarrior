@@ -2,6 +2,24 @@
 
 A tool for migrating Todoist tasks to Taskwarrior.
 
+```sh
+$ python -m todoist_taskwarrior.cli --help
+Usage: cli.py [OPTIONS] COMMAND [ARGS]...
+
+  Manage the migration of data from Todoist into Taskwarrior.
+
+Options:
+  --todoist-api-key TEXT  [required]
+  --tw-config-file TEXT
+  --debug
+  --help                  Show this message and exit.
+
+Commands:
+  clean        Remove the data stored in the Todoist task cache.
+  migrate      Migrate tasks from Todoist to Taskwarrior.
+  synchronize  Update the local Todoist task cache.
+```
+
 ## Usage
 
 Running the tool requires that your Todoist API key is available from the
@@ -9,19 +27,12 @@ environment under the name `TODOIST_API_KEY`. The key can be found or created in
 the [Todoist Integrations Settings](https://todoist.com/prefs/integrations).
 
 The main task is `migrate` which will import all tasks. Since Todoist's internal
-ID is saved with the task, subsequent runs will detect and skip duplicates:
+ID is saved with the task, subsequent runs will detect and skip duplicates.
 
-```sh
-$ python -m todoist_taskwarrior.cli migrate --help
-Usage: cli.py migrate [OPTIONS]
+To try things out without clobbering your normal taskwarrior install, you can point
+to the taskwarrior directory in `sandbox/` by using `--tw-config-file=./sandbox/.taskrc`.
 
-Options:
-  -i, --interactive
-  --no-sync
-  --help             Show this message and exit.
-```
-
-Using the `--interactive` flag will prompt the user for input for each task,
+Using the `--interactive` (or `-i`) flag will prompt the user for input for each task,
 allowing the task to be modified before import:
 
 ```sh
@@ -53,6 +64,26 @@ $ python -m todoist_taskwarrior.cli migrate \
 ## Other tools
 
 * A fork that has been extended with synchronization: [webmeisterei/todoist-taskwarrior/](https://git.webmeisterei.com/webmeisterei/todoist-taskwarrior/) by [@pcdummy](https://github.com/pcdummy)
+
+## Debugging
+
+Running the tool in debug mode will give more detailed output:
+
+```sh
+$ python -m todoist_taskwarrior.cli --debug [command...]
+```
+
+Note: because it's a global option, it comes before the command and command options/arguments.
+
+It can also be useful to use this in combination with the sandbox/ directory to save migrated
+tasks in a well known place, and prevent messing up the global taskwarrior:
+
+```sh
+$ python -m todoist_taskwarrior.cli \
+    --debug \
+    --tw-config-file=./sandbox/.taskrc \
+    migrate
+```
 
 ## Development
 
