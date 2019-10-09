@@ -1,4 +1,5 @@
 import click
+import logging
 import os
 import sys
 
@@ -11,7 +12,6 @@ from . import errors, io, utils, validation
 # data will be cached.
 TODOIST_CACHE = '~/.todoist-sync/'
 
-
 todoist = None
 taskwarrior = None
 
@@ -19,9 +19,11 @@ taskwarrior = None
 """ CLI Commands """
 
 @click.group()
-def cli():
+@click.option('--debug', is_flag=True, default=False)
+def cli(debug):
     """Manage the migration of data from Todoist into Taskwarrior. """
-    pass
+    level = logging.DEBUG if debug else logging.INFO
+    logging.basicConfig(level=level)
 
 
 @cli.command()
@@ -104,6 +106,10 @@ def migrate(ctx, interactive, sync, map_project, map_tag):
     This is tracked in Taskwarrior by setting and detecting the
     `todoist_id` property on the task.
     """
+    logging.debug(
+        f'MIGRATE interactive={interactive} sync={sync} '
+        f'map_project={map_project} map_tag={map_tag}'
+    )
 
     if sync:
         ctx.invoke(synchronize)
@@ -117,6 +123,7 @@ def migrate(ctx, interactive, sync, map_project, map_tag):
 
         # Log message and check if exists
         io.important(f'Task {idx + 1} of {len(tasks)}: {name}')
+        logging.debug(f'ITER_TASK task={task}')
         if check_task_exists(tid):
             io.info(f'Already exists (todoist_id={tid})')
             continue
@@ -124,21 +131,28 @@ def migrate(ctx, interactive, sync, map_project, map_tag):
         # Project
         p = todoist.projects.get_by_id(task['project_id'])
         project_hierarchy = [p]
+        logging.debug(f'FIND_PROJECT project={p}')
         while p['parent_id']:
             p = todoist.projects.get_by_id(p['parent_id'])
             project_hierarchy.insert(0, p)
 
         project_name = '.'.join(p['name'] for p in project_hierarchy)
+        logging.debug(f'PROJECT_HIERARCHY project_name={project_name}')
+
         project_name = utils.try_map(
             map_project,
             project_name
         )
+        logging.debug(f'MAP_PROJECT_NAME project_name={project_name}')
+
+        # Project
         data['project'] = utils.maybe_quote_ws(project_name)
 
         # Priority
         data['priority'] = utils.parse_priority(task['priority'])
 
         # Tags
+        logging.debug(f"TAGS labels={task['labels']}")
         data['tags'] = [
             utils.try_map(map_tag, todoist.labels.get_by_id(l_id)['name'])
             for l_id in task['labels']
