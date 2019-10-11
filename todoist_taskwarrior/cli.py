@@ -148,21 +148,24 @@ def migrate(ctx, interactive, sync, map_project, map_tag):
             continue
 
         # Project
-        p = todoist.projects.get_by_id(task['project_id'])
-        project_hierarchy = [p]
-        logging.debug(f'FIND_PROJECT project={p}')
-        while p['parent_id']:
-            p = todoist.projects.get_by_id(p['parent_id'])
-            project_hierarchy.insert(0, p)
+        if task['project_id']:
+            p = todoist.projects.get_by_id(task['project_id'])
+            project_hierarchy = [p]
+            logging.debug(f'FIND_PROJECT project={p}')
+            while p['parent_id']:
+                p = todoist.projects.get_by_id(p['parent_id'])
+                project_hierarchy.insert(0, p)
 
-        project_name = '.'.join(p['name'] for p in project_hierarchy)
-        logging.debug(f'PROJECT_HIERARCHY project_name={project_name}')
+            project_name = '.'.join(p['name'] for p in project_hierarchy)
+            logging.debug(f'PROJECT_HIERARCHY project_name={project_name}')
 
-        project_name = utils.try_map(
-            map_project,
-            project_name
-        )
-        logging.debug(f'MAP_PROJECT_NAME project_name={project_name}')
+            project_name = utils.try_map(
+                map_project,
+                project_name
+            )
+            logging.debug(f'MAP_PROJECT_NAME project_name={project_name}')
+        else:
+            project_name = ''
 
         # Project
         data['project'] = utils.maybe_quote_ws(project_name)
