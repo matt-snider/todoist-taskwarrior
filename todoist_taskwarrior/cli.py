@@ -6,6 +6,7 @@ import sys
 from taskw import TaskWarrior
 from todoist.api import TodoistAPI
 from . import errors, io, utils, validation
+from . import __title__, __version__
 
 
 # This is the location where the todoist
@@ -19,6 +20,7 @@ taskwarrior = None
 """ CLI Commands """
 
 @click.group()
+@click.version_option(version=__version__, prog_name=__title__)
 @click.option('--todoist-api-key', envvar='TODOIST_API_KEY', required=True)
 @click.option('--tw-config-file', envvar='TASKRC', default='~/.taskrc')
 @click.option('--debug', is_flag=True, default=False)
@@ -126,8 +128,8 @@ def migrate(ctx, interactive, sync, map_project, map_tag):
     `todoist_id` property on the task.
     """
     logging.debug(
-        f'MIGRATE interactive={interactive} sync={sync} '
-        f'map_project={map_project} map_tag={map_tag}'
+        f'MIGRATE version={__version__} interactive={interactive}'
+        f'sync={sync} map_project={map_project} map_tag={map_tag}'
     )
 
     if sync:
