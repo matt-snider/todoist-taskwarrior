@@ -98,8 +98,12 @@ def clean():
         callback=validation.validate_map,
         help='Tags specified will be translated from SRC to DST. '
              'If DST is omitted, the tag will be removed when SRC matches.')
+@click.option('--filter-task-id', type=int,
+        help='Only import a task matching the given ID')
+@click.option('--filter-proj-id', type=int,
+        help='Only import the tasks in the project matching the given ID')
 @click.pass_context
-def migrate(ctx, interactive, sync, map_project, map_tag):
+def migrate(ctx, interactive, sync, map_project, map_tag, filter_task_id, filter_proj_id):
     """Migrate tasks from Todoist to Taskwarrior.
 
     By default this command will synchronize with the Todoist servers
@@ -128,14 +132,28 @@ def migrate(ctx, interactive, sync, map_project, map_tag):
     `todoist_id` property on the task.
     """
     logging.debug(
-        f'MIGRATE version={__version__} interactive={interactive}'
-        f'sync={sync} map_project={map_project} map_tag={map_tag}'
+        f'MIGRATE version={__version__} interactive={interactive} '
+        f'sync={sync} map_project={map_project} map_tag={map_tag} '
+        f'filter_task_id={filter_task_id} filter_proj_id={filter_proj_id}'
     )
 
     if sync:
         ctx.invoke(synchronize)
 
-    tasks = todoist.items.all()
+    # Build filter function
+    filt = {}
+    if filter_task_id:
+        filt['id'] = filter_task_id
+    if filter_proj_id:
+        filt['project_id'] = filter_proj_id
+    filter_fn = make_filter_fn(filt)
+
+    # Get all matching Todoist tasks
+    tasks = todoist.items.all(filt=filter_fn)
+    if not tasks:
+        io.warn('No matching tasks found (are you using filters?)')
+        return
+
     io.important(f'Starting migration of {len(tasks)} tasks...')
     for idx, task in enumerate(tasks):
         data = {}
@@ -332,6 +350,21 @@ def parse_recur_or_prompt(due):
             value_proc=validation.validate_recur,
         )
 
+def make_filter_fn(filter_dict):
+    """Returns a lambda which, when given a Todoist task, will check
+    whether it has the same values for keys in `filter_dict`, returning
+    a bool
+    """
+    if not filter_dict:
+        return None
+
+    def fn(task):
+        for k, v in filter_dict.items():
+            if task[k] != v:
+                return False
+        return True
+
+    return fn
 
 """ Entrypoint """
 
