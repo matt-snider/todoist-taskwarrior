@@ -6,7 +6,7 @@ def validate_map(ctx, param, value):
     map_project = {}
     for mapping in value:
         try:
-            src, dst = mapping.split('=', 2)
+            src, dst = mapping.split('=', 1)
         except ValueError:
             raise click.BadParameter('--map-project needs to be of the form SRC=DST')
 
