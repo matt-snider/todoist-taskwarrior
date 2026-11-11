@@ -34,3 +34,8 @@ def test_validate_map():
     # Hierarchical src
     assert validate(validation.validate_map, ('foo.bar=bazz',)) == {'foo.bar': 'bazz'}
     assert validate(validation.validate_map, ('foo bar.bazz=bazz',)) == {'foo bar.bazz': 'bazz'}
+
+
+def test_validate_map_value_with_equals():
+    # A '=' inside DST maps SRC to the whole remainder, it is not an error.
+    assert validate(validation.validate_map, ('A=B=C',)) == {'A': 'B=C'}
